@@ -1,0 +1,6 @@
+- podmansh
+  /usr/share/ublue-os/quadlets/podmansh
+- fonts
+  config/files/usr/share/fonts/commit-mono
+  config/files/usr/share/fonts/inter
+  config/files/usr/share/fonts/ubuntu

@@ -1,0 +1,165 @@
+# image will be published to ghcr.io/<user>/<name>
+name: os-apps
+# description will be included in the image's metadata
+description: base containing all the added and removed apps
+
+# the base image to build on top of (FROM) and the version tag to use
+base-image: ghcr.io/ublue-os/silverblue-main
+image-version: latest # latest is also supported if you want new updates ASAP
+
+# module configuration, executed in order
+# you can include multiple instances of the same module
+modules:
+  - type: files
+    files:
+      - etc: /etc
+
+  - type: rpm-ostree
+    repos:
+      - https://raw.githubusercontent.com/rpmfusion/rpmfusion-free-release/master/rpmfusion-free-tainted.repo
+      - https://raw.githubusercontent.com/rpmfusion/rpmfusion-nonfree-release/master/rpmfusion-nonfree-tainted.repo
+    remove:
+      - firefox # default firefox removed in favor of flatpak
+      - firefox-langpacks # langpacks needs to also be removed to prevent dependency problems
+      - gnome-software-rpm-ostree
+      - gnome-tour
+    install:
+      # todo
+      - blackbox-terminal
+      # base
+      - busybox
+      - fish
+      - helix
+      - kitty
+      - mosh
+      - tcpdump
+      - tmux
+      - ncdu
+      - netcat
+      - socat
+      - fd-find
+      - fzf
+      - ripgrep
+      - pv
+      - fdupes
+      - btop
+      - iotop
+      - powertop
+      - podman-compose
+      - podman-tui
+      - podmansh
+      - gnome-shell-extension-appindicator
+      - gnome-shell-extension-caffeine
+      - gnome-shell-extension-gsconnect
+      - gnome-shell-extension-just-perfection
+      - gnome-console
+      - gnome-keyring
+      - gnome-keyring-pam
+      - geary
+      - dconf-editor
+      - d-feet
+      - simple-scan
+      - splix
+      # - hplip
+      - input-remapper
+      - nautilus-gsconnect
+      - wireguard-tools
+      - wl-clipboard
+      # media
+      - mpv
+      - vlc
+      # nice
+      - yt-dlp
+      - yt-dlp-fish-completion
+      - yt-dlp-bash-completion
+      # extra
+      - gum
+      - glow
+      # dx
+      # - postgresql-server
+      - postgresql
+      - code
+      # k8s
+      - helm
+      - kubernetes-client
+      # dev
+      - git
+      - patch
+      - patchutils
+      - gettext
+      - perf
+      - valgrind
+      # c
+      - autoconf
+      - automake
+      - binutils
+      - bison
+      - flex
+      - lldb
+      - clang
+      - clang-libs
+      - clang-tools-extra
+      - clang-analyzer
+      - bear
+      - gcc
+      - gcc-c++
+      - gdb
+      - glibc-devel
+      - libtool
+      - make
+      - pkgconf
+      - strace
+      - ltrace
+      - ccache
+      - cmake
+      - meson
+
+  - type: default-flatpaks
+    system:
+      repo-name: flathub
+      repo-title: "Flathub (system)" # Optional; this sets the remote's user-facing name in graphical frontends like GNOME Software
+      remove:
+        - org.gnome.eog
+      install:
+        - org.gnome.Loupe
+        - com.belmoussaoui.Authenticator
+        - com.brave.Browser
+        - com.github.micahflee.torbrowser-launcher
+        - com.github.tchx84.Flatseal
+        - com.mattjakeman.ExtensionManager
+        # - com.raggesilver.BlackBox
+        # - com.ranfdev.Notify
+        # - com.usebottles.bottles
+        # - dev.k8slens.OpenLens
+        - io.github.cleomenezesjr.Escambo
+        # - io.github.limads.Queries
+        - io.gitlab.news_flash.NewsFlash
+        - it.fabiodistasio.AntaresSQL
+        # - me.kozec.syncthingtk
+        # - me.ppvan.psequel
+        - org.fedoraproject.MediaWriter
+        - org.gnome.Solanum
+        # - org.gnome.SoundRecorder
+        - org.gnome.gitlab.somas.Apostrophe
+        # - org.localsend.localsend_app
+        - org.mozilla.firefox
+        - org.telegram.desktop
+        - us.zoom.Zoom
+
+  - type: fonts
+    fonts:
+      nerd-fonts:
+        - FiraCode # don't add "Nerd Font" suffix.
+        - Hack
+        - SourceCodePro
+        - Terminus
+        - JetBrainsMono
+        - NerdFontsSymbolsOnly
+      google-fonts:
+        - Roboto
+        - Open Sans
+
+  - type: script
+    scripts:
+      # this sets up the proper policy & signing files for signed images to work
+      - signing.sh

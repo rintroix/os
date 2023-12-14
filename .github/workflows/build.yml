@@ -32,8 +32,8 @@ jobs:
       packages: write
       id-token: write
     strategy:
-      fail-fast: false
-
+      fail-fast: true
+      max-parallel: 1
       matrix:
 # !!!
         # Add recipes for all the images you want to build here.
