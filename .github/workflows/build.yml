@@ -42,7 +42,7 @@ jobs:
         registry:
           - name: ghcr.io
             user: ${{ github.actor }}
-            password: ${{ github.token }}
+            password: ${{ secrets.GITHUB_TOKEN }}
 # !!!
 
     steps:
