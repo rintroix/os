@@ -39,11 +39,6 @@ jobs:
           - 01-os-apps.yml
           - 02-os-kernel.yml
           - 03-os.yml
-
-        registry:
-          - ghcr.io
-          - quay.io
-          - docker.io
 # !!!
 
     steps:
@@ -126,19 +121,19 @@ jobs:
             io.artifacthub.package.readme-url=https://raw.githubusercontent.com/ublue-os/startingpoint/main/README.md
             io.artifacthub.package.logo-url=https://avatars.githubusercontent.com/u/120078124?s=200&v=4
 
-      # Workaround bug where capital letters in your GitHub username make it impossible to push to GHCR.
-      # https://github.com/macbre/push-to-ghcr/issues/12
-      - name: Lowercase Registry
-        id: registry_case
-        uses: ASzc/change-string-case-action@v6
-        with:
-          string: ${{ matrix.registry.name }}/${{ github.repository_owner }}
+      # # Workaround bug where capital letters in your GitHub username make it impossible to push to GHCR.
+      # # https://github.com/macbre/push-to-ghcr/issues/12
+      # - name: Lowercase Registry
+      #   id: registry_case
+      #   uses: ASzc/change-string-case-action@v6
+      #   with:
+      #     string: ${{ matrix.registry.name }}/${{ github.repository_owner }}
 
-      - name: Lowercase Image
-        id: image_case
-        uses: ASzc/change-string-case-action@v6
-        with:
-          string: ${{ env.IMAGE_NAME }}
+      # - name: Lowercase Image
+      #   id: image_case
+      #   uses: ASzc/change-string-case-action@v6
+      #   with:
+      #     string: ${{ env.IMAGE_NAME }}
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
@@ -178,21 +173,42 @@ jobs:
             IMAGE_MAJOR_VERSION=${{ env.IMAGE_MAJOR_VERSION }}
             BASE_IMAGE_URL=${{ env.BASE_IMAGE_URL }}
             RECIPE=${{ matrix.recipe }}
-            IMAGE_REGISTRY=${{ matrix.registry }}
+            IMAGE_REGISTRY=delme
           labels: ${{ steps.meta.outputs.labels }}
           oci: false
 
       - name: Push To Registry
         uses: redhat-actions/push-to-registry@v2
-        id: push
+        id: ghcr
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/live'
         with:
           image: ${{ steps.build_image.outputs.image }}
           tags: ${{ steps.build_image.outputs.tags }}
-          registry: ${{ matrix.registry }}/${{ github.repository_owner }}
+          registry: ghcr.io/${{ github.repository_owner }}
           extra-args: |
             --disable-content-trust
 
+      - name: Push To Registry
+        uses: redhat-actions/push-to-registry@v2
+        id: quay
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/live'
+        with:
+          image: ${{ steps.build_image.outputs.image }}
+          tags: ${{ steps.build_image.outputs.tags }}
+          registry: quay.io/${{ github.repository_owner }}
+          extra-args: |
+            --disable-content-trust
+
+      - name: Push To Registry
+        uses: redhat-actions/push-to-registry@v2
+        id: docker
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/live'
+        with:
+          image: ${{ steps.build_image.outputs.image }}
+          tags: ${{ steps.build_image.outputs.tags }}
+          registry: docker.io/${{ github.repository_owner }}
+          extra-args: |
+            --disable-content-trust
 
       # Sign container
       - uses: sigstore/cosign-installer@v3.3.0
@@ -201,7 +217,25 @@ jobs:
       - name: Sign container image
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/live'
         run: |
-          cosign sign -y --key env://COSIGN_PRIVATE_KEY ${{ matrix.registry }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}@${TAGS}
+          cosign sign -y --key env://COSIGN_PRIVATE_KEY ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}@${TAGS}
+        env:
+          TAGS: ${{ steps.push.outputs.digest }}
+          COSIGN_EXPERIMENTAL: false
+          COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
+
+      - name: Sign container image
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/live'
+        run: |
+          cosign sign -y --key env://COSIGN_PRIVATE_KEY quay.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}@${TAGS}
+        env:
+          TAGS: ${{ steps.push.outputs.digest }}
+          COSIGN_EXPERIMENTAL: false
+          COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
+
+      - name: Sign container image
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/live'
+        run: |
+          cosign sign -y --key env://COSIGN_PRIVATE_KEY docker.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}@${TAGS}
         env:
           TAGS: ${{ steps.push.outputs.digest }}
           COSIGN_EXPERIMENTAL: false
