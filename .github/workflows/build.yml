@@ -62,7 +62,7 @@ jobs:
                    "IMAGE_DESCRIPTION=" + .description,
                    "IMAGE_MAJOR_VERSION=" + ."image-version",
                    "BASE_IMAGE_URL=" + ."base-image"
-            )' ./config/${{ matrix.recipe }} >> $GITHUB_ENV
+            )' ./config/${{ matrix.recipe }} | tee -a $GITHUB_OUTPUT >> $GITHUB_ENV
 
       # - name: Gather image data from recipe
       #   run: |
@@ -125,7 +125,7 @@ jobs:
           labels: |
             org.opencontainers.image.title=${{ env.IMAGE_NAME }}
             org.opencontainers.image.version=${{ steps.labels.outputs.VERSION }}
-            org.opencontainers.image.description=${{ env.IMAGE_DESCRIPTION }}
+            org.opencontainers.image.description=$IMAGE_DESCRIPTION
             io.artifacthub.package.readme-url=https://raw.githubusercontent.com/ublue-os/startingpoint/main/README.md
             io.artifacthub.package.logo-url=https://avatars.githubusercontent.com/u/120078124?s=200&v=4
 
