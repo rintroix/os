@@ -49,7 +49,6 @@ jobs:
           remove-android: 'true'
           remove-haskell: 'true'
 
-      # Checkout push-to-registry action GitHub repository
       - name: Checkout Push to Registry action
         uses: actions/checkout@v4
 
@@ -62,20 +61,12 @@ jobs:
                    "IMAGE_DESCRIPTION=" + .description,
                    "IMAGE_MAJOR_VERSION=" + ."image-version",
                    "BASE_IMAGE_URL=" + ."base-image"
-            )' ./config/${{ matrix.recipe }} | tee -a $GITHUB_OUTPUT >> $GITHUB_ENV
-
-      # - name: Gather image data from recipe
-      #   run: |
-      #     # echo "IMAGE_NAME=$(yq '.name' ./config/${{ matrix.recipe }})" >> $GITHUB_ENV
-      #     # echo "IMAGE_DESCRIPTION=$(yq '.description' ./config/${{ matrix.recipe }})" >> $GITHUB_ENV
-      #     echo "IMAGE_MAJOR_VERSION=$(yq '.image-version' ./config/${{ matrix.recipe }})" >> $GITHUB_ENV
-      #     echo "BASE_IMAGE_URL=$(yq '.base-image' ./config/${{ matrix.recipe }})" >> $GITHUB_ENV
+            )' ./config/${{ matrix.recipe }} >> $GITHUB_ENV
 
       - name: Get current version
         id: labels
         run: |
-          ver=$(skopeo inspect docker://$BASE_IMAGE_URL:$IMAGE_MAJOR_VERSION | jq -r '.Labels["org.opencontainers.image.version"]')
-          echo "VERSION=$ver" >> $GITHUB_OUTPUT
+          skopeo inspect --format='VERSION={{ index .Labels "org.opencontainers.image.version" }}' docker://$BASE_IMAGE_URL:$IMAGE_MAJOR_VERSION >> $GITHUB_OUTPUT
 
       - name: Generate tags
         id: generate-tags
@@ -115,7 +106,6 @@ jobs:
           done
           echo "alias_tags=${alias_tags[*]}" >> $GITHUB_OUTPUT
 
-      # Build metadata
       - name: Image Metadata
         uses: docker/metadata-action@v5
         id: meta
@@ -125,7 +115,7 @@ jobs:
           labels: |
             org.opencontainers.image.title=${{ env.IMAGE_NAME }}
             org.opencontainers.image.version=${{ steps.labels.outputs.VERSION }}
-            org.opencontainers.image.description=$IMAGE_DESCRIPTION
+            org.opencontainers.image.description=${{ env.IMAGE_DESCRIPTION }}
             io.artifacthub.package.readme-url=https://raw.githubusercontent.com/ublue-os/startingpoint/main/README.md
             io.artifacthub.package.logo-url=https://avatars.githubusercontent.com/u/120078124?s=200&v=4
 
@@ -143,8 +133,6 @@ jobs:
       #   with:
       #     string: ${{ env.IMAGE_NAME }}
 
-
-      # Build image using Buildah action
       - name: Build Image
         id: build_image
         uses: redhat-actions/buildah-build@v2
@@ -158,7 +146,6 @@ jobs:
             IMAGE_MAJOR_VERSION=${{ env.IMAGE_MAJOR_VERSION }}
             BASE_IMAGE_URL=${{ env.BASE_IMAGE_URL }}
             RECIPE=${{ matrix.recipe }}
-            IMAGE_REGISTRY=delme
           labels: ${{ steps.meta.outputs.labels }}
           oci: false
 
@@ -172,8 +159,6 @@ jobs:
           registry: ghcr.io/${{ github.repository_owner }}
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
-          # extra-args: |
-          #   --disable-content-trust
 
       - name: Push To Registry
         uses: redhat-actions/push-to-registry@v2
@@ -185,8 +170,6 @@ jobs:
           registry: quay.io/${{ github.repository_owner }}
           username: ${{ github.repository_owner }}
           password: ${{ secrets.QUAY_PASSWORD }}
-          # extra-args: |
-          #   --disable-content-trust
 
       - name: Push To Registry
         uses: redhat-actions/push-to-registry@v2
@@ -198,8 +181,6 @@ jobs:
           registry: docker.io/${{ github.repository_owner }}
           username: ${{ github.repository_owner }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-          # extra-args: |
-          #   --disable-content-trust
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
@@ -209,7 +190,7 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Login to GitHub Container Registry
+      - name: Login to Quay Container Registry
         uses: docker/login-action@v3
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/live'
         with:
@@ -217,7 +198,7 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.QUAY_PASSWORD }}
 
-      - name: Login to GitHub Container Registry
+      - name: Login to Docker Container Registry
         uses: docker/login-action@v3
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/live'
         with:
@@ -225,7 +206,6 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.DOCKER_PASSWORD }}
   
-      # Sign container
       - uses: sigstore/cosign-installer@v3.3.0
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/live'
 
