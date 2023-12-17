@@ -57,20 +57,24 @@ jobs:
         id: config
         uses: mikefarah/yq@v4.40.5
         with:
-          cmd: yq '.|("IMAGE_NAME=" + .name , "IMAGE_DESCRIPTION=" + .description)' ./config/${{ matrix.recipe }} >> $GITHUB_ENV
-          # cmd: yq '. | {"name": .name, "description": .description, "base-image": ."base-image", "base-tag": ."image-version"}' ./config/${{ matrix.recipe }}
+          cmd: |
+            yq '.|("IMAGE_NAME=" + .name ,
+                   "IMAGE_DESCRIPTION=" + .description,
+                   "IMAGE_MAJOR_VERSION=" + ."image-version",
+                   "BASE_IMAGE_URL=" + ."base-image"
+            )' ./config/${{ matrix.recipe }} >> $GITHUB_ENV
 
-      - name: Gather image data from recipe
-        run: |
-          # echo "IMAGE_NAME=$(yq '.name' ./config/${{ matrix.recipe }})" >> $GITHUB_ENV
-          # echo "IMAGE_DESCRIPTION=$(yq '.description' ./config/${{ matrix.recipe }})" >> $GITHUB_ENV
-          echo "IMAGE_MAJOR_VERSION=$(yq '.image-version' ./config/${{ matrix.recipe }})" >> $GITHUB_ENV
-          echo "BASE_IMAGE_URL=$(yq '.base-image' ./config/${{ matrix.recipe }})" >> $GITHUB_ENV
+      # - name: Gather image data from recipe
+      #   run: |
+      #     # echo "IMAGE_NAME=$(yq '.name' ./config/${{ matrix.recipe }})" >> $GITHUB_ENV
+      #     # echo "IMAGE_DESCRIPTION=$(yq '.description' ./config/${{ matrix.recipe }})" >> $GITHUB_ENV
+      #     echo "IMAGE_MAJOR_VERSION=$(yq '.image-version' ./config/${{ matrix.recipe }})" >> $GITHUB_ENV
+      #     echo "BASE_IMAGE_URL=$(yq '.base-image' ./config/${{ matrix.recipe }})" >> $GITHUB_ENV
 
       - name: Get current version
         id: labels
         run: |
-          ver=$(skopeo inspect docker://${{ env.BASE_IMAGE_URL }}:${{ env.IMAGE_MAJOR_VERSION }} | jq -r '.Labels["org.opencontainers.image.version"]')
+          ver=$(skopeo inspect docker://$BASE_IMAGE_URL:$IMAGE_MAJOR_VERSION | jq -r '.Labels["org.opencontainers.image.version"]')
           echo "VERSION=$ver" >> $GITHUB_OUTPUT
 
       - name: Generate tags
