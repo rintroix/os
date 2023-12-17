@@ -57,7 +57,7 @@ jobs:
         id: config
         uses: mikefarah/yq@v4.40.5
         with:
-          cmd: yq '.|("IMAGE_NAME=" + .name , "IMAGE_DESCRIPTION=" + "\"" + .description + "\"")' ./config/${{ matrix.recipe }} >> $GITHUB_ENV
+          cmd: yq '.|("IMAGE_NAME=" + .name , "IMAGE_DESCRIPTION=" + .description)' ./config/${{ matrix.recipe }} >> $GITHUB_ENV
           # cmd: yq '. | {"name": .name, "description": .description, "base-image": ."base-image", "base-tag": ."image-version"}' ./config/${{ matrix.recipe }}
 
       - name: Gather image data from recipe
