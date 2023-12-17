@@ -147,7 +147,7 @@ jobs:
         with:
           containerfiles: |
             ./Containerfile
-          image: ${{ steps.config.outputs.result.name }}
+          image: ${{ env.IMAGE_NAME }}
           tags: |
             ${{ steps.generate-tags.outputs.alias_tags }}
           build-args: |
