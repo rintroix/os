@@ -46,7 +46,8 @@ modules:
       - laptop # installs TLP and configures your system for laptop usage
       - flatpaksync # allows synchronization of user-installed flatpaks, see separate documentation section
 
-  - type: script
-    scripts:
-      # this sets up the proper policy & signing files for signed images to work
-      - signing.sh
+
+  # - type: script
+  #   scripts:
+  #     # this sets up the proper policy & signing files for signed images to work
+  #     - signing.sh
