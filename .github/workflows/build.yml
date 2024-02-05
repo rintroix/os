@@ -206,7 +206,7 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.DOCKER_PASSWORD }}
   
-      - uses: sigstore/cosign-installer@v3.3.0
+      - uses: sigstore/cosign-installer@v3.4.0
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/live'
 
       - name: Sign container image
