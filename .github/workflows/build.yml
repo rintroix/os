@@ -54,7 +54,7 @@ jobs:
 
       - name: Add yq (for reading recipe.yml)
         id: config
-        uses: mikefarah/yq@v4.40.5
+        uses: mikefarah/yq@v4.42.1
         with:
           cmd: |
             yq '.|("IMAGE_NAME=" + .name ,
